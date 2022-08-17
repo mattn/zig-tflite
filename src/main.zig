@@ -213,6 +213,9 @@ test "basic test" {
     var input = inputTensor.data(f32);
     var output = outputTensor.data(f32);
 
+    try std.testing.expectEqual(@as(usize, 2), input.len);
+    try std.testing.expectEqual(@as(usize, 1), output.len);
+
     const T = struct { input: []const f32, want: f32 };
     var tests = [_]T{
         .{ .input = &.{ 0, 0 }, .want = 0 },
