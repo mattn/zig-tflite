@@ -155,9 +155,10 @@ const Tensor = struct {
         return c.TfLiteTensorByteSize(self.t);
     }
 
-    pub fn data(self: *Self, comptime T: type) [*]T {
+    pub fn data(self: *Self, comptime T: type) []T {
         var d = c.TfLiteTensorData(self.t);
-        return @ptrCast([*]T, @alignCast(@alignOf(T), d.?));
+        var a = c.TfLiteTensorByteSize(self.t) / @sizeOf(T);
+        return @ptrCast([*]T, @alignCast(@alignOf(T), d.?))[0..a];
     }
 
     pub fn name(self: *Self) []const u8 {
