@@ -6,6 +6,11 @@ pub fn build(b: *std.build.Builder) void {
     // between Debug, ReleaseSafe, ReleaseFast, and ReleaseSmall.
     const mode = b.standardReleaseOptions();
 
+    var tflitePkg = std.build.Pkg{
+        .name = "zig-tflite",
+        .source = std.build.FileSource{ .path = "src/main.zig" },
+    };
+
     const lib = b.addStaticLibrary("zig-tflite", "src/main.zig");
     lib.setBuildMode(mode);
     if (builtin.os.tag == .windows) {
@@ -13,6 +18,19 @@ pub fn build(b: *std.build.Builder) void {
         lib.lib_paths.append("c:/msys64/mingw64/lib") catch unreachable;
     }
     lib.install();
+
+    const exe = b.addExecutable("fizzbuzz", "example/fizzbuzz.zig");
+    if (builtin.os.tag == .windows) {
+        exe.include_dirs.append(.{ .raw_path = "c:/msys64/mingw64/include" }) catch unreachable;
+        exe.lib_paths.append("c:/msys64/mingw64/lib") catch unreachable;
+    }
+    exe.setBuildMode(mode);
+    exe.addPackage(tflitePkg);
+    exe.linkLibrary(lib);
+    exe.linkSystemLibrary("tensorflowlite_c");
+    exe.linkSystemLibrary("c");
+    b.default_step.dependOn(&exe.step);
+    exe.install();
 
     const main_tests = b.addTest("src/main.zig");
     main_tests.setBuildMode(mode);
