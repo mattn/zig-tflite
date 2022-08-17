@@ -62,7 +62,7 @@ const InterpreterOptions = struct {
         c.TfLiteInterpreterOptionsDelete(self.o);
     }
 
-    pub fn SetNumThreads(self: *Self, num_threads: i32) void {
+    pub fn setNumThreads(self: *Self, num_threads: i32) void {
         c.TfLiteInterpreterOptionsSetNumThreads(self.o, num_threads);
     }
 };
@@ -130,40 +130,40 @@ const Tensor = struct {
 
     const Self = @This();
 
-    pub fn Type(self: *Self) TensorType {
+    pub fn tensorType(self: *Self) TensorType {
         return @intToEnum(TensorType, c.TfLiteTensorType(self.t));
     }
 
-    pub fn NumDims(self: *Self) i32 {
+    pub fn numDims(self: *Self) i32 {
         return c.TfLiteTensorNumDims(self.t);
     }
 
-    pub fn Dim(self: *Self, index: i32) i32 {
+    pub fn dim(self: *Self, index: i32) i32 {
         return c.TfLiteTensorDim(self.t, index);
     }
 
-    pub fn Shape(self: *Self, allocator: std.mem.Allocator) !std.ArrayList(i32) {
-        var shape = std.ArrayList(i32).init(allocator);
+    pub fn shape(self: *Self, allocator: std.mem.Allocator) !std.ArrayList(i32) {
+        var s = std.ArrayList(i32).init(allocator);
         var i: i32 = 0;
-        while (i < self.NumDims()) : (i += 1) {
-            try shape.append(self.Dim(i));
+        while (i < self.numDims()) : (i += 1) {
+            try s.append(self.dim(i));
         }
-        return shape;
+        return s;
     }
 
-    pub fn ByteSize(self: *Self) usize {
+    pub fn byteSize(self: *Self) usize {
         return c.TfLiteTensorByteSize(self.t);
     }
 
-    pub fn Data(self: *Self, comptime T: type) [*]T {
-        var data = c.TfLiteTensorData(self.t);
-        return @ptrCast([*]T, @alignCast(@alignOf(T), data.?));
+    pub fn data(self: *Self, comptime T: type) [*]T {
+        var d = c.TfLiteTensorData(self.t);
+        return @ptrCast([*]T, @alignCast(@alignOf(T), d.?));
     }
 
-    pub fn Name(self: *Self) []const u8 {
-        var name = c.TfLiteTensorName(self.t);
-        var len = c.strlen(name);
-        return name[0..len];
+    pub fn name(self: *Self) []const u8 {
+        var n = c.TfLiteTensorName(self.t);
+        var len = c.strlen(n);
+        return n[0..len];
     }
 };
 
@@ -176,7 +176,7 @@ test "basic test" {
     var o = try interpreterOptions();
     defer o.deinit();
 
-    o.SetNumThreads(4);
+    o.setNumThreads(4);
 
     var i = try interpreter(m, o);
     defer i.deinit();
@@ -189,37 +189,37 @@ test "basic test" {
     var inputTensor = i.inputTensor(0);
     var outputTensor = i.outputTensor(0);
 
-    try std.testing.expectEqual(TensorType.Float32, inputTensor.Type());
-    try std.testing.expectEqual(TensorType.Float32, outputTensor.Type());
-    try std.testing.expectEqual(@as(i32, 2), inputTensor.NumDims());
-    try std.testing.expectEqual(@as(i32, 2), outputTensor.NumDims());
-    try std.testing.expectEqual(@as(i32, 1), inputTensor.Dim(0));
-    try std.testing.expectEqual(@as(i32, 2), inputTensor.Dim(1));
-    try std.testing.expectEqual(@as(i32, 1), outputTensor.Dim(0));
-    try std.testing.expectEqual(@as(i32, 1), outputTensor.Dim(1));
-    try std.testing.expectEqual(@as(usize, 8), inputTensor.ByteSize());
-    try std.testing.expectEqual(@as(usize, 4), outputTensor.ByteSize());
-    try std.testing.expectEqualStrings("dense_input", inputTensor.Name());
-    try std.testing.expectEqualStrings("Identity", outputTensor.Name());
+    try std.testing.expectEqual(TensorType.Float32, inputTensor.tensorType());
+    try std.testing.expectEqual(TensorType.Float32, outputTensor.tensorType());
+    try std.testing.expectEqual(@as(i32, 2), inputTensor.numDims());
+    try std.testing.expectEqual(@as(i32, 2), outputTensor.numDims());
+    try std.testing.expectEqual(@as(i32, 1), inputTensor.dim(0));
+    try std.testing.expectEqual(@as(i32, 2), inputTensor.dim(1));
+    try std.testing.expectEqual(@as(i32, 1), outputTensor.dim(0));
+    try std.testing.expectEqual(@as(i32, 1), outputTensor.dim(1));
+    try std.testing.expectEqual(@as(usize, 8), inputTensor.byteSize());
+    try std.testing.expectEqual(@as(usize, 4), outputTensor.byteSize());
+    try std.testing.expectEqualStrings("dense_input", inputTensor.name());
+    try std.testing.expectEqualStrings("Identity", outputTensor.name());
 
-    var shape = try inputTensor.Shape(allocator);
+    var shape = try inputTensor.shape(allocator);
     try std.testing.expectEqualSlices(i32, &[_]i32{ 1, 2 }, shape.items);
     shape.deinit();
-    shape = try outputTensor.Shape(allocator);
+    shape = try outputTensor.shape(allocator);
     try std.testing.expectEqualSlices(i32, &[_]i32{ 1, 1 }, shape.items);
     shape.deinit();
 
-    var input = inputTensor.Data(f32);
-    var output = outputTensor.Data(f32);
+    var input = inputTensor.data(f32);
+    var output = outputTensor.data(f32);
 
     const T = struct { input: []const f32, want: f32 };
-    var data = [_]T{
+    var tests = [_]T{
         .{ .input = &.{ 0, 0 }, .want = 0 },
         .{ .input = &.{ 1, 0 }, .want = 1 },
         .{ .input = &.{ 0, 1 }, .want = 1 },
         .{ .input = &.{ 1, 1 }, .want = 0 },
     };
-    for (data) |item| {
+    for (tests) |item| {
         input[0] = item.input[0];
         input[1] = item.input[1];
         try i.invoke();
