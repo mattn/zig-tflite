@@ -23,8 +23,8 @@ pub fn main() anyerror!void {
     var inputTensor = i.inputTensor(0);
     var outputTensor = i.outputTensor(0);
 
-    var input = inputTensor.Data(f32);
-    var output = outputTensor.Data(f32);
+    var input = inputTensor.data(f32);
+    var output = outputTensor.data(f32);
 
     input[0] = 0;
     input[1] = 1;
