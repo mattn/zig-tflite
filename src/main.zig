@@ -38,7 +38,7 @@ const Model = struct {
 };
 
 pub fn modelFromData(data: []const u8) !Model {
-    var m = c.TfLiteModelCreate(data, data.len);
+    var m = c.TfLiteModelCreate(@ptrCast([*]const u8, data), data.len);
     if (m == null) {
         return error.AllocationError;
     }
@@ -230,4 +230,11 @@ test "basic test" {
         var result: f32 = if (output[0] > 0.5) 1 else 0;
         try std.testing.expectEqual(item.want, result);
     }
+}
+
+test "test modelFromData" {
+    const model = @embedFile("../testdata/xor_model.tflite");
+    var m = try modelFromData(model);
+    defer m.deinit();
+    _ = m;
 }
