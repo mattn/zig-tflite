@@ -200,8 +200,8 @@ test "basic test" {
     try std.testing.expectEqual(@as(i32, 1), outputTensor.dim(1));
     try std.testing.expectEqual(@as(usize, 8), inputTensor.byteSize());
     try std.testing.expectEqual(@as(usize, 4), outputTensor.byteSize());
-    try std.testing.expectEqualStrings("dense_input", inputTensor.name());
-    try std.testing.expectEqualStrings("Identity", outputTensor.name());
+    try std.testing.expectEqualStrings("serving_default_dense_input:0", inputTensor.name());
+    try std.testing.expectEqualStrings("StatefulPartitionedCall:0", outputTensor.name());
 
     var shape = try inputTensor.shape(allocator);
     try std.testing.expectEqualSlices(i32, &[_]i32{ 1, 2 }, shape.items);
