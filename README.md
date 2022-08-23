@@ -36,6 +36,8 @@ pub fn main() anyerror!void {
 }
 ```
 
+Example: <https://github.com/mattn/zig-tflite-example/>
+
 ## Requirements
 
 * TensorFlow Lite - This release requires 2.2.0-rc3
