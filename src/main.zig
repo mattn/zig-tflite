@@ -2,6 +2,7 @@ const std = @import("std");
 const c = @cImport({
     @cDefine("WIN32_LEAN_AND_MEAN", "1");
     @cInclude("tensorflow/lite/c/c_api.h");
+    //@cInclude("tensorflow/lite/delegates/xnnpack/xnnpack_delegate.h");
     @cInclude("string.h");
 });
 
@@ -233,8 +234,33 @@ test "basic test" {
 }
 
 test "test modelFromData" {
-    const model = @embedFile("../testdata/xor_model.tflite");
+    var allocator = std.testing.allocator;
+
+    const model = try std.fs.cwd().readFileAlloc(allocator, "testdata/xor_model.tflite", 1024 * 1024);
+    defer allocator.free(model);
     var m = try modelFromData(model);
     defer m.deinit();
     _ = m;
 }
+
+// test "test delegate" {
+//     var allocator = std.testing.allocator;
+//
+//     const model = try std.fs.cwd().readFileAlloc(allocator, "testdata/xor_model.tflite", 1024 * 1024);
+//     defer allocator.free(model);
+//     var m = try modelFromData(model);
+//     defer m.deinit();
+//
+//     var o = try interpreterOptions();
+//     defer o.deinit();
+//
+//     //o.addDelegate(XNNPACK(4));
+//     o.addDelegate();
+//
+//     var i = try interpreter(m, o);
+//     defer i.deinit();
+//
+//     try i.allocateTensors();
+//
+//     try i.invoke();
+// }
