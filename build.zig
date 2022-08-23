@@ -27,6 +27,7 @@ pub fn build(b: *std.build.Builder) void {
     exe.setBuildMode(mode);
     exe.addPackage(tflitePkg);
     exe.linkLibrary(lib);
+    exe.linkSystemLibrary("tensorflowlite-delegate_xnnpack");
     exe.linkSystemLibrary("tensorflowlite_c");
     exe.linkSystemLibrary("c");
     b.default_step.dependOn(&exe.step);
@@ -38,6 +39,7 @@ pub fn build(b: *std.build.Builder) void {
         main_tests.include_dirs.append(.{ .raw_path = "c:/msys64/mingw64/include" }) catch unreachable;
         main_tests.lib_paths.append("c:/msys64/mingw64/lib") catch unreachable;
     }
+    main_tests.linkSystemLibrary("tensorflowlite-delegate_xnnpack");
     main_tests.linkSystemLibrary("tensorflowlite_c");
     main_tests.linkSystemLibrary("c");
 

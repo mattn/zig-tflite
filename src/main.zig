@@ -2,7 +2,7 @@ const std = @import("std");
 const c = @cImport({
     @cDefine("WIN32_LEAN_AND_MEAN", "1");
     @cInclude("tensorflow/lite/c/c_api.h");
-    //@cInclude("tensorflow/lite/delegates/xnnpack/xnnpack_delegate.h");
+    @cInclude("tensorflow/lite/delegates/xnnpack/xnnpack_delegate.h");
     @cInclude("string.h");
 });
 
@@ -66,6 +66,10 @@ const InterpreterOptions = struct {
     pub fn setNumThreads(self: *Self, num_threads: i32) void {
         c.TfLiteInterpreterOptionsSetNumThreads(self.o, num_threads);
     }
+
+    pub fn addDelegate(self: *Self, d: delegate) void {
+        c.TfLiteInterpreterOptionsAddDelegate(self.o, d.p);
+    }
 };
 
 pub fn interpreterOptions() !InterpreterOptions {
@@ -103,7 +107,7 @@ const Interpreter = struct {
 
     pub fn inputTensor(self: *Self, index: i32) Tensor {
         return Tensor{
-            .t = c.TfLiteInterpreterGetInputTensor(self.i, index).?,
+            .t = c.TfLiteInterpreterGetInputTensor(self.i, index),
         };
     }
 
@@ -113,10 +117,22 @@ const Interpreter = struct {
 
     pub fn outputTensor(self: *Self, index: i32) Tensor {
         return Tensor{
-            .t = c.TfLiteInterpreterGetOutputTensor(self.i, index).?,
+            .t = c.TfLiteInterpreterGetOutputTensor(self.i, index),
         };
     }
 };
+
+const delegate = struct {
+    p: *c.TfLiteDelegate,
+};
+
+pub fn XNNPACK(num_threads: i32) delegate {
+    var options = c.TfLiteXNNPackDelegateOptionsDefault();
+    options.num_threads = num_threads;
+    return delegate{
+        .p = c.TfLiteXNNPackDelegateCreate(&options),
+    };
+}
 
 pub fn interpreter(model: Model, options: InterpreterOptions) !Interpreter {
     var i = c.TfLiteInterpreterCreate(model.m, options.o);
@@ -243,24 +259,23 @@ test "test modelFromData" {
     _ = m;
 }
 
-// test "test delegate" {
-//     var allocator = std.testing.allocator;
-//
-//     const model = try std.fs.cwd().readFileAlloc(allocator, "testdata/xor_model.tflite", 1024 * 1024);
-//     defer allocator.free(model);
-//     var m = try modelFromData(model);
-//     defer m.deinit();
-//
-//     var o = try interpreterOptions();
-//     defer o.deinit();
-//
-//     //o.addDelegate(XNNPACK(4));
-//     o.addDelegate();
-//
-//     var i = try interpreter(m, o);
-//     defer i.deinit();
-//
-//     try i.allocateTensors();
-//
-//     try i.invoke();
-// }
+test "test delegate" {
+    var allocator = std.testing.allocator;
+
+    const model = try std.fs.cwd().readFileAlloc(allocator, "testdata/xor_model.tflite", 1024 * 1024);
+    defer allocator.free(model);
+    var m = try modelFromData(model);
+    defer m.deinit();
+
+    var o = try interpreterOptions();
+    defer o.deinit();
+
+    o.addDelegate(XNNPACK(4));
+
+    var i = try interpreter(m, o);
+    defer i.deinit();
+
+    try i.allocateTensors();
+
+    try i.invoke();
+}
