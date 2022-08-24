@@ -1,5 +1,4 @@
 const std = @import("std");
-const delegate = @import("delegate.zig");
 const c = @cImport({
     @cDefine("WIN32_LEAN_AND_MEAN", "1");
     @cInclude("tensorflow/lite/c/c_api.h");
@@ -67,8 +66,8 @@ const InterpreterOptions = struct {
         c.TfLiteInterpreterOptionsSetNumThreads(self.o, num_threads);
     }
 
-    pub fn addDelegate(self: *Self, d: delegate.Delegate) void {
-        c.TfLiteInterpreterOptionsAddDelegate(self.o, d.p);
+    pub fn addDelegate(self: *Self, d: *c.TfLiteDelegate) void {
+        c.TfLiteInterpreterOptionsAddDelegate(self.o, d);
     }
 };
 
