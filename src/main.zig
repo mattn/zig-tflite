@@ -66,7 +66,7 @@ const InterpreterOptions = struct {
         c.TfLiteInterpreterOptionsSetNumThreads(self.o, num_threads);
     }
 
-    pub fn addDelegate(self: *Self, d: *c.TfLiteDelegate) void {
+    pub fn addDelegate(self: *Self, d: anytype) void {
         c.TfLiteInterpreterOptionsAddDelegate(self.o, d);
     }
 };
