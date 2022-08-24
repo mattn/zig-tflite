@@ -67,7 +67,7 @@ const InterpreterOptions = struct {
     }
 
     pub fn addDelegate(self: *Self, d: anytype) void {
-        c.TfLiteInterpreterOptionsAddDelegate(self.o, d);
+        c.TfLiteInterpreterOptionsAddDelegate(self.o, @ptrCast(*c.TfLiteDelegate, d));
     }
 };
 
