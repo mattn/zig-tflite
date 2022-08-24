@@ -64,6 +64,11 @@ $ bazel build --config opt --config monolithic //tensorflow/lite/c:libtensorflow
 $ zig build
 ```
 
+## Delegate addins
+
+* [XNNPACK](https://github.com/mattn/zig-tflite-xnnpack)
+* [EdgeTPU](https://github.com/mattn/zig-tflite-edgetpu)
+
 ## License
 
 MIT
