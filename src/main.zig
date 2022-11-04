@@ -243,5 +243,4 @@ test "test modelFromData" {
     defer allocator.free(model);
     var m = try modelFromData(model);
     defer m.deinit();
-    _ = m;
 }
